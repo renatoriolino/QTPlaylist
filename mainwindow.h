@@ -29,7 +29,11 @@ private slots:
 
     void on_btMoveDown_clicked();
 
+    void on_menuServicesSettings();
 private:
     Ui::MainWindow *ui;
+
+    QMenu *menuServices;
+    QAction *actionServicesSettings;
 };
 #endif // MAINWINDOW_H
