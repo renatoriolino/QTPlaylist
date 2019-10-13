@@ -11,6 +11,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    QCoreApplication::setOrganizationName("QTPlaylist");
+    QCoreApplication::setOrganizationDomain("github.com/renatoriolino");
+    QCoreApplication::setApplicationName("Renato Riolino");
+
     actionServicesSettings = new QAction("&Settings", this);
     connect(actionServicesSettings, &QAction::triggered, this, &MainWindow::on_menuServicesSettings);
     menuServices = menuBar()->addMenu("&Services");

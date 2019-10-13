@@ -32,7 +32,7 @@ void settingsWindow::on_buttonBox_rejected()
 
 void settingsWindow::LoadSettings()
 {
-    QSettings settings("QTPlaylist", "Renato Riolino");
+    QSettings settings;
 
     ui->txtId->setText("");
     ui->txtSecret->setText("");
@@ -49,7 +49,7 @@ void settingsWindow::SaveSettings()
     if (ui->comboService->currentText().length() == 0)
         return;
 
-    QSettings settings("QTPlaylist", "Renato Riolino");
+    QSettings settings;
 
     settings.setValue(ui->comboService->currentText() + "/id", ui->txtId->text());
     settings.setValue(ui->comboService->currentText() + "/secret", ui->txtSecret->text());
