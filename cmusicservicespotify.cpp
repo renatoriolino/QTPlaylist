@@ -50,7 +50,6 @@ bool cMusicServiceSpotify::IsConnected()
 
 bool cMusicServiceSpotify::Search(QString _str)
 {
-    Connect();
     if (!m_IsConnected)
         return false;
 
@@ -69,10 +68,10 @@ bool cMusicServiceSpotify::Search(QString _str)
         const auto document = QJsonDocument::fromJson(data);
         const auto root = document.object();
 
-        QList<QString> sr;
+        QList<QPair<QString,QString>> sr;
         const auto items = root["tracks"]["items"].toArray();
         for (auto o : items)
-            sr.push_back(o["name"].toString());
+            sr.push_back(QPair<QString,QString>(o["name"].toString(), o["id"].toString()));
 
         searchResult(sr);
 
@@ -80,6 +79,35 @@ bool cMusicServiceSpotify::Search(QString _str)
     });
 
     return true;
+}
+
+void cMusicServiceSpotify::Play(const QString &_trackId)
+{
+    if (!m_IsConnected)
+        return;
+
+    QUrl u(QString("https://api.spotify.com/v1/tracks/")+_trackId);
+
+    auto reply = spotify.get(u);
+
+    connect(reply, &QNetworkReply::finished, [=]() {
+        if (reply->error() != QNetworkReply::NoError) {
+           return;
+        }
+
+        const auto data = reply->readAll();
+
+        const auto document = QJsonDocument::fromJson(data);
+        const auto root = document.object();
+
+        QString trackPreview = root["preview_url"].toString();
+        trackAvailableForPlay(trackPreview);
+        qDebug() << "track: " << trackPreview;
+
+        reply->deleteLater();
+    });
+
+
 }
 
 void cMusicServiceSpotify::granted()

@@ -5,6 +5,8 @@
 #include <QListWidgetItem>
 #include "imusicservice.h"
 
+#include <QMediaPlayer>
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -36,7 +38,9 @@ private slots:
 
     void connected();
 
-    void on_searchResult(const QList<QString> &res);
+    void on_searchResult(const QList<QPair<QString,QString>> &res);
+
+    void on_trackAvailableForPlaying(const QString &_url);
 private:
     Ui::MainWindow *ui;
 
@@ -45,5 +49,7 @@ private:
     QAction *actionServicesSettings;
 
     iMusicService *musicService;
+
+    QMediaPlayer *player;
 };
 #endif // MAINWINDOW_H

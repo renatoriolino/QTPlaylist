@@ -14,9 +14,11 @@ public:
 
     virtual bool Search(QString _str) = 0;
 
+    virtual void Play(const QString &_trackId) = 0;
 signals:
     void connected();
-    void searchResult(QList<QString> r);
+    void searchResult(QList<QPair<QString,QString>> r);
+    void trackAvailableForPlay(const QString &_preview);
 
 public slots:
 protected:
