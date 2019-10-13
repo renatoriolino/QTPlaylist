@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "settingswindow.h"
+#include "cmusicservicespotify.h"
 
 #include <QDebug>
 
@@ -15,14 +16,25 @@ MainWindow::MainWindow(QWidget *parent)
     QCoreApplication::setOrganizationDomain("github.com/renatoriolino");
     QCoreApplication::setApplicationName("Renato Riolino");
 
+    actionServicesConnect = new QAction("&Connect", this);
+    connect(actionServicesConnect, &QAction::triggered, this, &MainWindow::on_menuServicesConnect);
     actionServicesSettings = new QAction("&Settings", this);
     connect(actionServicesSettings, &QAction::triggered, this, &MainWindow::on_menuServicesSettings);
     menuServices = menuBar()->addMenu("&Services");
+    menuServices->addAction(actionServicesConnect);
+    menuServices->addSeparator();
     menuServices->addAction(actionServicesSettings);
+
+    musicService = new cMusicServiceSpotify();
+
+    connect(musicService, SIGNAL(searchResult(QList<QString>)), this, SLOT(on_searchResult(QList<QString>)));
 }
 
 MainWindow::~MainWindow()
 {
+    delete musicService;
+    delete menuServices;
+    delete actionServicesSettings;
     delete ui;
 }
 
@@ -30,7 +42,9 @@ MainWindow::~MainWindow()
 void MainWindow::on_txtSearch_returnPressed()
 {
     ui->listResult->clear();
-    ui->listResult->addItem(ui->txtSearch->text());
+    //ui->listResult->addItem(ui->txtSearch->text());
+    if (!musicService->Search(ui->txtSearch->text()))
+        qDebug() << "Search failed";
 }
 
 void MainWindow::on_listResult_itemDoubleClicked(QListWidgetItem *item)
@@ -75,11 +89,29 @@ void MainWindow::on_btMoveDown_clicked()
     ui->listPlaylist->setCurrentRow(row+1);
 }
 
+void MainWindow::on_menuServicesConnect()
+{
+    musicService->Connect();
+    connect(musicService, SIGNAL(connected()), this, SLOT(connected()));
+}
+
 void MainWindow::on_menuServicesSettings()
 {
     qDebug() << "settings";
     settingsWindow settingsWin;
     settingsWin.setModal(true);
     settingsWin.exec();
+
+}
+
+void MainWindow::connected()
+{
+    qDebug() << "Connected!!!";
+}
+
+void MainWindow::on_searchResult(const QList<QString> &res)
+{
+    for (auto r : res)
+        ui->listResult->addItem(r);
 
 }

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
+#include "imusicservice.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -29,11 +30,20 @@ private slots:
 
     void on_btMoveDown_clicked();
 
+    void on_menuServicesConnect();
+
     void on_menuServicesSettings();
+
+    void connected();
+
+    void on_searchResult(const QList<QString> &res);
 private:
     Ui::MainWindow *ui;
 
     QMenu *menuServices;
+    QAction *actionServicesConnect;
     QAction *actionServicesSettings;
+
+    iMusicService *musicService;
 };
 #endif // MAINWINDOW_H

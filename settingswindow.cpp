@@ -50,7 +50,6 @@ void settingsWindow::SaveSettings()
         return;
 
     QSettings settings;
-
     settings.setValue(ui->comboService->currentText() + "/id", ui->txtId->text());
     settings.setValue(ui->comboService->currentText() + "/secret", ui->txtSecret->text());
 }
