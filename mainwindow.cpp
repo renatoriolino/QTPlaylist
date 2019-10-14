@@ -5,6 +5,7 @@
 #include "imusicservice.h"
 #include "cmusicservicespotify.h"
 
+#include <QSettings>
 #include <QMessageBox>
 #include <QDebug>
 
@@ -42,6 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    savePlaylist();
     delete player;
     delete musicService;
     delete menuServices;
@@ -52,6 +54,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_txtSearch_returnPressed()
 {
+    if (!musicService->IsConnected())
+    {
+        QMessageBox msgBox;
+        msgBox.setText("You need to connect first!");
+        msgBox.exec();
+        return;
+    }
     ui->listResult->clear();
     //ui->listResult->addItem(ui->txtSearch->text());
     if (!musicService->Search(ui->txtSearch->text()))
@@ -125,6 +134,8 @@ void MainWindow::on_menuServicesSettings()
 void MainWindow::connected()
 {
     qDebug() << "Connected!!!";
+    loadPlaylist();
+    qDebug() << "loadPLaylist retornou...";
 }
 
 void MainWindow::on_searchResult(const QList<iMusicService::S_TRACK_DATA> &res)
@@ -217,6 +228,45 @@ void MainWindow::setPlayIcon(int _row)
     ui->listPlaylist->item(_row)->setIcon(m_PlayIcon);
 }
 
+void MainWindow::loadPlaylist()
+{
+    if (!musicService->IsConnected())
+        return;
+
+    QSettings settings;
+    int count = settings.beginReadArray("playlist");
+    for (int i=0; i<count; i++)
+    {
+        settings.setArrayIndex(i);
+        auto *newItem = new QListWidgetItem(settings.value("name").toString(), nullptr);
+        newItem->setData(QTPLAYLISTDATA_ID, settings.value("id").toString());
+        newItem->setData(QTPLAYLISTDATA_URL, settings.value("url").toString());
+        newItem->setData(QTPLAYLISTDATA_STAT, settings.value("stat").toInt());
+        ui->listPlaylist->addItem(newItem);
+    }
+    settings.endArray();
+}
+
+void MainWindow::savePlaylist()
+{
+    if (!musicService->IsConnected())
+        return;
+
+    QSettings settings;
+    //settings.remove("playlist");
+    settings.beginWriteArray("playlist");//, ui->listPlaylist->count());
+    for (int i=0; i<ui->listPlaylist->count(); i++)
+    {
+        settings.setArrayIndex(i);
+        settings.setValue("name", ui->listPlaylist->item(i)->text());
+        settings.setValue("id", ui->listPlaylist->item(i)->data(QTPLAYLISTDATA_ID).toString());
+        settings.setValue("url", ui->listPlaylist->item(i)->data(QTPLAYLISTDATA_URL).toString());
+        settings.setValue("stat", ui->listPlaylist->item(i)->data(QTPLAYLISTDATA_STAT).toInt());
+qDebug() << "Salvei " << ui->listPlaylist->item(i)->text();
+    }
+    settings.endArray();
+}
+
 void MainWindow::on_btPrev_clicked()
 {
     int t = getCurrentTrack();
@@ -247,4 +297,9 @@ void MainWindow::on_btNext_clicked()
 
     setCurrentTrack(t+1);
 
+}
+
+void MainWindow::on_btClear_clicked()
+{
+    ui->listPlaylist->clear();
 }

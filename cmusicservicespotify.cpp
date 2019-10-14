@@ -118,6 +118,7 @@ void cMusicServiceSpotify::granted()
     qDebug() << "Connected!";
 
     m_IsConnected = true;
+    connected();
 }
 
 void cMusicServiceSpotify::status_changed(QAbstractOAuth::Status status)

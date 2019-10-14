@@ -46,6 +46,8 @@ private slots:
 
     void on_btNext_clicked();
 
+    void on_btClear_clicked();
+
 private:
     Ui::MainWindow *ui;
 
@@ -65,5 +67,8 @@ private:
     void stop(void);
 
     void setPlayIcon(int _row);
+
+    void loadPlaylist(void);
+    void savePlaylist(void);
 };
 #endif // MAINWINDOW_H
