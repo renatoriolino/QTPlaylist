@@ -18,7 +18,7 @@ public:
 
     virtual bool Search(QString _str);
 
-    virtual void Play(const QString &_trackId);
+    virtual void Play(const QString &_trackId, int _row);
 public slots:
     void granted(void);
     void status_changed(QAbstractOAuth::Status status);

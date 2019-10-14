@@ -68,10 +68,10 @@ bool cMusicServiceSpotify::Search(QString _str)
         const auto document = QJsonDocument::fromJson(data);
         const auto root = document.object();
 
-        QList<QPair<QString,QString>> sr;
+        QList<S_TRACK_DATA> sr;
         const auto items = root["tracks"]["items"].toArray();
         for (auto o : items)
-            sr.push_back(QPair<QString,QString>(o["name"].toString(), o["id"].toString()));
+            sr.push_back({ o["name"].toString(), o["id"].toString(), o["preview_url"].toString()});
 
         searchResult(sr);
 
@@ -81,7 +81,7 @@ bool cMusicServiceSpotify::Search(QString _str)
     return true;
 }
 
-void cMusicServiceSpotify::Play(const QString &_trackId)
+void cMusicServiceSpotify::Play(const QString &_trackId, int _row)
 {
     if (!m_IsConnected)
         return;
@@ -101,7 +101,10 @@ void cMusicServiceSpotify::Play(const QString &_trackId)
         const auto root = document.object();
 
         QString trackPreview = root["preview_url"].toString();
-        trackAvailableForPlay(trackPreview);
+        if (trackPreview.length() == 0)
+            trackNotAvailable();
+        else
+            trackAvailableForPlay(trackPreview);
         qDebug() << "track: " << trackPreview;
 
         reply->deleteLater();

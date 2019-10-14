@@ -2,9 +2,15 @@
 #include "ui_mainwindow.h"
 
 #include "settingswindow.h"
+#include "imusicservice.h"
 #include "cmusicservicespotify.h"
 
+#include <QMessageBox>
 #include <QDebug>
+
+#define QTPLAYLISTDATA_ID   1000
+#define QTPLAYLISTDATA_URL  1001
+#define QTPLAYLISTDATA_STAT 1002
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -27,10 +33,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     musicService = new cMusicServiceSpotify();
 
-    connect(musicService, SIGNAL(searchResult(QList<QPair<QString,QString>>)), this, SLOT(on_searchResult(QList<QPair<QString,QString>>)));
+    connect(musicService, SIGNAL(searchResult(const QList<iMusicService::S_TRACK_DATA>&)), this, SLOT(on_searchResult(const QList<iMusicService::S_TRACK_DATA>&)));
 
     player = new QMediaPlayer;
-    connect(musicService, SIGNAL(trackAvailableForPlay(const QString&)), this, SLOT(on_trackAvailableForPlaying(const QString&)));
+
+    m_PlayIcon.addFile(":/images/play1.png", QSize(16, 16));
 }
 
 MainWindow::~MainWindow()
@@ -58,8 +65,14 @@ void MainWindow::on_listResult_itemDoubleClicked(QListWidgetItem *item)
 
 void MainWindow::on_listPlaylist_itemDoubleClicked(QListWidgetItem *item)
 {
-    qDebug() << "Playing " << item->text() << " at " << item->data(1000).toString() << "...";
-    musicService->Play(item->data(1000).toString());
+    int row=0;
+    for (; row<ui->listPlaylist->count(); row++)
+        if (ui->listPlaylist->item(row) == item)
+            break;
+
+    qDebug() << "Playing " << item->text() << " at " << item->data(QTPLAYLISTDATA_URL).toString() << "...";
+    setCurrentTrack(row);
+    playCurrentTrack();
 }
 
 void MainWindow::on_btDelete_clicked()
@@ -114,20 +127,124 @@ void MainWindow::connected()
     qDebug() << "Connected!!!";
 }
 
-void MainWindow::on_searchResult(const QList<QPair<QString,QString>> &res)
+void MainWindow::on_searchResult(const QList<iMusicService::S_TRACK_DATA> &res)
 {
     for (auto r : res)
     {
-        auto *newItem = new QListWidgetItem(r.first, nullptr);
-        newItem->setData(1000, r.second);
+        auto *newItem = new QListWidgetItem(r.name, nullptr);
+        newItem->setData(QTPLAYLISTDATA_ID, r.id);
+        newItem->setData(QTPLAYLISTDATA_URL, r.url);
         ui->listResult->addItem(newItem);
-        //ui->listResult->addItem( r.first);
     }
+}
+
+void MainWindow::on_btPlay_clicked()
+{
+    if (m_Playing)
+    {
+        stop();
+        return;
+    }
+
+    if (ui->listPlaylist->count() == 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Playlist is empty!");
+        msgBox.exec();
+        return;
+    }
+
+    int row = -1;
+    for (int i=0; i<ui->listPlaylist->count() && row < 0; i++)
+        if (ui->listPlaylist->item(i)->data(QTPLAYLISTDATA_STAT).toInt() == 1)
+            row = i;
+    if (row < 0)
+        row = 0;
+
+    setCurrentTrack(row);
+    playCurrentTrack();
+}
+
+bool MainWindow::setCurrentTrack(int _row)
+{
+    // Clear play status from all items and set for the item on the selected row
+    for (int i=0; i<ui->listPlaylist->count(); i++)
+        ui->listPlaylist->item(i)->setData(QTPLAYLISTDATA_STAT, 0);
+    ui->listPlaylist->item(_row)->setData(QTPLAYLISTDATA_STAT, 1);
+
+    if (ui->listPlaylist->item(_row)->data(QTPLAYLISTDATA_URL).toString().length() == 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("No preview available for " + ui->listPlaylist->item(_row)->text());
+        msgBox.exec();
+        return false;
+    }
+
+    player->setMedia(QUrl(ui->listPlaylist->item(_row)->data(QTPLAYLISTDATA_URL).toString()));
+    if (m_Playing)
+        playCurrentTrack();
+    return true;
+}
+
+void MainWindow::playCurrentTrack()
+{
+    for (int i=0; i<ui->listPlaylist->count(); i++)
+        if (ui->listPlaylist->item(i)->data(QTPLAYLISTDATA_STAT).toInt() == 1)
+        {
+            setPlayIcon(i);
+            break;
+        }
+
+    player->play();
+    m_Playing = true;
+}
+
+void MainWindow::stop()
+{
+    setPlayIcon(-1);
+    player->stop();
+    m_Playing = false;
+}
+
+void MainWindow::setPlayIcon(int _row)
+{
+    for (int i=0; i<ui->listPlaylist->count(); i++)
+        ui->listPlaylist->item(i)->setIcon(QIcon());
+
+    if (_row < 0 || _row >= ui->listPlaylist->count())
+        return;
+
+    ui->listPlaylist->item(_row)->setIcon(m_PlayIcon);
+}
+
+void MainWindow::on_btPrev_clicked()
+{
+    int t = getCurrentTrack();
+    if (t < 0 || !m_Playing)
+        return;
+    if (t == 0)
+        t = ui->listPlaylist->count();
+
+    setCurrentTrack(t-1);
+}
+
+int MainWindow::getCurrentTrack()
+{
+    for (int i=0; i<ui->listPlaylist->count(); i++)
+        if (ui->listPlaylist->item(i)->data(QTPLAYLISTDATA_STAT).toInt() == 1)
+            return i;
+    return -1;
 
 }
 
-void MainWindow::on_trackAvailableForPlaying(const QString &_url)
+void MainWindow::on_btNext_clicked()
 {
-    player->setMedia(QUrl(_url));
-    player->play();
+    int t = getCurrentTrack();
+    if (t < 0 || !m_Playing)
+        return;
+    if (t >= ui->listPlaylist->count()-1)
+        t = -1;
+
+    setCurrentTrack(t+1);
+
 }

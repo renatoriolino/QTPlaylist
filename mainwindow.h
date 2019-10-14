@@ -38,9 +38,14 @@ private slots:
 
     void connected();
 
-    void on_searchResult(const QList<QPair<QString,QString>> &res);
+    void on_searchResult(const QList<iMusicService::S_TRACK_DATA> &res);
 
-    void on_trackAvailableForPlaying(const QString &_url);
+    void on_btPlay_clicked();
+
+    void on_btPrev_clicked();
+
+    void on_btNext_clicked();
+
 private:
     Ui::MainWindow *ui;
 
@@ -51,5 +56,14 @@ private:
     iMusicService *musicService;
 
     QMediaPlayer *player;
+    bool m_Playing = false;
+    QIcon m_PlayIcon;
+
+    int getCurrentTrack(void);
+    bool setCurrentTrack(int _row);
+    void playCurrentTrack(void);
+    void stop(void);
+
+    void setPlayIcon(int _row);
 };
 #endif // MAINWINDOW_H
